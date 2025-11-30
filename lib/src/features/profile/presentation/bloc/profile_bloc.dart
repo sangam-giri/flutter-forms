@@ -14,7 +14,10 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
     on<ProfileSubmitted>(_submit);
   }
 
-  void _initialize(ProfileFormInitialized event, Emitter<ProfileState> emit) {
+  Future<void> _initialize(
+    ProfileFormInitialized event,
+    Emitter<ProfileState> emit,
+  ) async {
     if (event.isUpdate) {
       emit(state.copyWith(formStatus: AppStatus.loading));
 
@@ -24,15 +27,14 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
         email: 'example@gmail.com',
       );
 
-      Future.delayed(Duration(seconds: 3), () {
-        emit(
-          state.copyWith(
-            formStatus: AppStatus.successful,
-            form: form,
-            initialForm: form,
-          ),
-        );
-      });
+      await Future.delayed(Duration(seconds: 3));
+      emit(
+        state.copyWith(
+          formStatus: AppStatus.successful,
+          form: form,
+          initialForm: form,
+        ),
+      );
     } else {
       emit(state.copyWith(formStatus: AppStatus.completed));
     }
@@ -55,14 +57,16 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
   }
 
   void _updateStatus(ProfileSateUpdated event, Emitter<ProfileState> emit) {
-    emit(state.copyWith(form: state.initialForm, toggleAddress: false));
+    emit(state.copyWith(formStatus: event.status, toggleAddress: false));
   }
 
-  void _submit(ProfileSubmitted event, Emitter<ProfileState> emit) {
+  Future<void> _submit(
+    ProfileSubmitted event,
+    Emitter<ProfileState> emit,
+  ) async {
     emit(state.copyWith(profileStatus: AppStatus.loading));
 
-    Future.delayed(Duration(seconds: 3), () {
-      emit(state.copyWith(profileStatus: AppStatus.completed));
-    });
+    await Future.delayed(Duration(seconds: 3));
+    emit(state.copyWith(profileStatus: AppStatus.completed));
   }
 }
