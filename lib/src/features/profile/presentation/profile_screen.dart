@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:forms_example/src/core/enums/app_status.dart';
+import 'package:forms_example/src/core/widgets/custom_bottom_navbar.dart';
+import 'package:forms_example/src/core/widgets/custom_textfield.dart';
 import 'package:forms_example/src/features/profile/domain/entity/profile.dart';
 import 'package:forms_example/src/features/profile/presentation/bloc/profile_bloc.dart';
 
@@ -12,9 +14,11 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
+  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   late final TextEditingController _nameController;
   late final TextEditingController _emailController;
   late final TextEditingController _addressController;
+
   @override
   void initState() {
     _nameController = TextEditingController();
@@ -94,7 +98,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
                           backgroundColor: Colors.green,
-                          content: Text('Failed'),
+                          content: Text('Successful'),
                         ),
                       );
                     default:
@@ -113,52 +117,31 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 return Column(
                   children: [
                     Form(
+                      key: _formKey,
                       child: Padding(
                         padding: const EdgeInsets.all(8.0),
                         child: Column(
                           children: [
-                            TextFormField(
+                            CustomTextField(
                               controller: _nameController,
-                              autovalidateMode:
-                                  AutovalidateMode.onUserInteraction,
-                              validator: (value) {
-                                if (_nameController.text.isEmpty) {
-                                  return 'Cannot be empty';
-                                }
-                                return null;
-                              },
                               onChanged: (value) {
                                 context.read<ProfileBloc>().add(
                                   ProfileFormUpdated(name: value),
                                 );
                               },
                             ),
-                            TextFormField(
+                            SizedBox(height: 8),
+                            CustomTextField(
                               controller: _emailController,
-                              autovalidateMode:
-                                  AutovalidateMode.onUserInteraction,
-                              validator: (value) {
-                                if (_emailController.text.isEmpty) {
-                                  return 'Cannot be empty';
-                                }
-                                return null;
-                              },
                               onChanged: (value) {
                                 context.read<ProfileBloc>().add(
                                   ProfileFormUpdated(email: value),
                                 );
                               },
                             ),
-                            TextFormField(
+                            SizedBox(height: 8),
+                            CustomTextField(
                               controller: _addressController,
-                              autovalidateMode:
-                                  AutovalidateMode.onUserInteraction,
-                              validator: (value) {
-                                if (_addressController.text.isEmpty) {
-                                  return 'Cannot be empty';
-                                }
-                                return null;
-                              },
                               onChanged: (value) {
                                 context.read<ProfileBloc>().add(
                                   ProfileFormUpdated(address: value),
@@ -175,32 +158,34 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
           ),
           bottomNavigationBar: BlocBuilder<ProfileBloc, ProfileState>(
+            buildWhen: (previous, current) =>
+                previous.isDirty != current.isDirty,
             builder: (context, state) {
               final isDirty = state.isDirty;
 
-              return AnimatedPadding(
-                duration: const Duration(milliseconds: 200),
-                padding: EdgeInsets.only(
-                  bottom: MediaQuery.of(context).viewInsets.bottom + 8,
-                  left: 8,
-                  right: 8,
-                ),
+              return CustomBottomNavigationBar(
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     ElevatedButton(
-                      onPressed: () {
-                        context.read<ProfileBloc>().add(ProfileFormResetted());
-                        _setup(state);
-                      },
+                      onPressed: isDirty
+                          ? () {
+                              context.read<ProfileBloc>().add(
+                                ProfileFormResetted(),
+                              );
+                              _setup(state);
+                            }
+                          : null,
                       child: Text('Reset'),
                     ),
                     ElevatedButton(
                       onPressed: isDirty
                           ? () {
-                              context.read<ProfileBloc>().add(
-                                ProfileSubmitted(),
-                              );
+                              if (_formKey.currentState!.validate()) {
+                                context.read<ProfileBloc>().add(
+                                  ProfileSubmitted(),
+                                );
+                              }
                             }
                           : null,
                       child: Text('Save'),

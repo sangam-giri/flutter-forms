@@ -8,8 +8,8 @@ final class ProfileState extends Equatable {
   final AppStatus submitStatus;
 
   const ProfileState({
-    this.initialForm,
-    this.form,
+    this.initialForm = const Profile(),
+    this.form = const Profile(),
     this.formStatus = AppStatus.initial,
     this.submitStatus = AppStatus.initial,
     this.toggleAddress = false,

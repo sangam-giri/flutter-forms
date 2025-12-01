@@ -67,6 +67,7 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
     emit(state.copyWith(profileStatus: AppStatus.loading));
 
     await Future.delayed(Duration(seconds: 3));
+    emit(state.copyWith(profileStatus: AppStatus.successful));
     emit(state.copyWith(profileStatus: AppStatus.completed));
   }
 }
