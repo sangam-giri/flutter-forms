@@ -3,16 +3,14 @@ part of 'profile_bloc.dart';
 final class ProfileState extends Equatable {
   final Profile? initialForm;
   final Profile? form;
-  final AppStatus? formStatus;
-  final bool toggleAddress;
-  final AppStatus submitStatus;
+  final AppStatus? status;
+  final Failure? failure;
 
   const ProfileState({
     this.initialForm = const Profile(),
     this.form = const Profile(),
-    this.formStatus = AppStatus.initial,
-    this.submitStatus = AppStatus.initial,
-    this.toggleAddress = false,
+    this.status = AppStatus.initial,
+    this.failure,
   });
 
   bool get isDirty => initialForm != form;
@@ -20,26 +18,17 @@ final class ProfileState extends Equatable {
   ProfileState copyWith({
     Profile? initialForm,
     Profile? form,
-    AppStatus? formStatus,
-    AppStatus? profileStatus,
-    AppStatus? submitStatus,
-    bool? toggleAddress,
+    AppStatus? status,
+    Failure? failure,
   }) {
     return ProfileState(
       initialForm: initialForm ?? this.initialForm,
       form: form ?? this.form,
-      formStatus: formStatus ?? this.formStatus,
-      submitStatus: submitStatus ?? this.submitStatus,
-      toggleAddress: toggleAddress ?? this.toggleAddress,
+      status: status ?? this.status,
+      failure: failure ?? this.failure,
     );
   }
 
   @override
-  List<Object?> get props => [
-    initialForm,
-    form,
-    formStatus,
-    submitStatus,
-    toggleAddress,
-  ];
+  List<Object?> get props => [initialForm, form, status, failure];
 }

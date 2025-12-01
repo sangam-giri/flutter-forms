@@ -1,6 +1,7 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:forms_example/src/core/enums/app_status.dart';
+import 'package:forms_example/src/core/failure/failure.dart';
 import 'package:forms_example/src/features/profile/domain/entity/profile.dart';
 part 'profile_event.dart';
 part 'profile_state.dart';
@@ -10,7 +11,6 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
     on<ProfileFormInitialized>(_initialize);
     on<ProfileFormUpdated>(_update);
     on<ProfileFormResetted>(_reset);
-    on<ProfileSateUpdated>(_updateStatus);
     on<ProfileSubmitted>(_submit);
   }
 
@@ -19,7 +19,7 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
     Emitter<ProfileState> emit,
   ) async {
     if (event.isUpdate) {
-      emit(state.copyWith(formStatus: AppStatus.loading));
+      emit(state.copyWith(status: AppStatus.loading));
 
       final form = Profile(
         name: 'User',
@@ -29,14 +29,8 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
 
       await Future.delayed(Duration(seconds: 3));
       emit(
-        state.copyWith(
-          formStatus: AppStatus.successful,
-          form: form,
-          initialForm: form,
-        ),
+        state.copyWith(status: AppStatus.loaded, form: form, initialForm: form),
       );
-    } else {
-      emit(state.copyWith(formStatus: AppStatus.completed));
     }
   }
 
@@ -52,22 +46,16 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
     );
   }
 
-  void _reset(ProfileFormResetted event, Emitter<ProfileState> emit) {
-    emit(state.copyWith(form: state.initialForm, toggleAddress: false));
-  }
-
-  void _updateStatus(ProfileSateUpdated event, Emitter<ProfileState> emit) {
-    emit(state.copyWith(formStatus: event.status, toggleAddress: false));
-  }
+  void _reset(ProfileFormResetted event, Emitter<ProfileState> emit) =>
+      emit(state.copyWith(status: AppStatus.initial, form: state.initialForm));
 
   Future<void> _submit(
     ProfileSubmitted event,
     Emitter<ProfileState> emit,
   ) async {
-    emit(state.copyWith(profileStatus: AppStatus.loading));
+    emit(state.copyWith(status: AppStatus.loading));
 
     await Future.delayed(Duration(seconds: 3));
-    emit(state.copyWith(profileStatus: AppStatus.successful));
-    emit(state.copyWith(profileStatus: AppStatus.completed));
+    emit(state.copyWith(status: AppStatus.successful));
   }
 }

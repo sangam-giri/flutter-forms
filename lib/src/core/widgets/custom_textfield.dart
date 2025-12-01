@@ -22,7 +22,7 @@ class CustomTextField extends StatelessWidget {
       autovalidateMode: AutovalidateMode.onUserInteraction,
       validator: (value) {
         if (controller.text.isEmpty) {
-          return '';
+          return 'This field is required';
         }
         return null;
       },

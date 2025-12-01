@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:forms_example/src/core/enums/app_status.dart';
 import 'package:forms_example/src/core/widgets/custom_bottom_navbar.dart';
+import 'package:forms_example/src/core/widgets/custom_botton.dart';
 import 'package:forms_example/src/core/widgets/custom_textfield.dart';
 import 'package:forms_example/src/features/profile/domain/entity/profile.dart';
 import 'package:forms_example/src/features/profile/presentation/bloc/profile_bloc.dart';
@@ -35,12 +36,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
         _nameController.text = initial.name ?? '';
         _emailController.text = initial.email ?? '';
         _addressController.text = initial.address ?? '';
-      } else {
-        _nameController.clear();
-        _emailController.clear();
-        _addressController.clear();
       }
     });
+  }
+
+  void _clearFields() {
+    _nameController.clear();
+    _emailController.clear();
+    _addressController.clear();
   }
 
   @override
@@ -48,6 +51,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     _nameController.dispose();
     _emailController.dispose();
     _addressController.dispose();
+
     super.dispose();
   }
 
@@ -61,101 +65,96 @@ class _ProfileScreenState extends State<ProfileScreen> {
         child: Scaffold(
           resizeToAvoidBottomInset: true,
           appBar: AppBar(),
-          body: MultiBlocListener(
-            listeners: [
-              BlocListener<ProfileBloc, ProfileState>(
-                listenWhen: (previous, current) =>
-                    current.formStatus == AppStatus.successful &&
-                    current.initialForm != null,
-                listener: (context, state) {
+          body: BlocConsumer<ProfileBloc, ProfileState>(
+            listenWhen: (previous, current) =>
+                previous.status != current.status,
+            listener: (context, state) {
+              switch (state.status) {
+                case AppStatus.initial:
+                  _clearFields();
+
+                case AppStatus.loaded:
+                  Navigator.pop(context);
                   _setup(state);
-                  context.read<ProfileBloc>().add(
-                    ProfileSateUpdated(status: AppStatus.completed),
+
+                case AppStatus.loading:
+                  showDialog(
+                    context: context,
+                    builder: (context) => Center(child: Text('Loading')),
                   );
-                },
-              ),
-              BlocListener<ProfileBloc, ProfileState>(
-                listenWhen: (previous, current) =>
-                    previous.submitStatus != current.submitStatus,
-                listener: (context, state) {
-                  switch (state.submitStatus) {
-                    case AppStatus.loading:
-                      showDialog(
-                        context: context,
-                        builder: (context) => Center(child: Text('Loading')),
-                      );
-                    case AppStatus.failure:
-                      Navigator.pop(context);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          backgroundColor: Colors.red,
-                          content: Text('Failed'),
-                        ),
-                      );
-                    case AppStatus.successful:
-                      Navigator.pop(context);
-                      Navigator.pop(context);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          backgroundColor: Colors.green,
-                          content: Text('Successful'),
-                        ),
-                      );
-                    default:
-                  }
-                },
-              ),
-            ],
-            child: BlocBuilder<ProfileBloc, ProfileState>(
-              buildWhen: (previous, current) =>
-                  previous.formStatus != current.formStatus,
-              builder: (context, state) {
-                if (state.formStatus != AppStatus.initial &&
-                    state.formStatus != AppStatus.completed) {
-                  return Center(child: CircularProgressIndicator());
-                }
-                return Column(
-                  children: [
-                    Form(
-                      key: _formKey,
-                      child: Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: Column(
-                          children: [
-                            CustomTextField(
-                              controller: _nameController,
-                              onChanged: (value) {
-                                context.read<ProfileBloc>().add(
-                                  ProfileFormUpdated(name: value),
-                                );
-                              },
-                            ),
-                            SizedBox(height: 8),
-                            CustomTextField(
-                              controller: _emailController,
-                              onChanged: (value) {
-                                context.read<ProfileBloc>().add(
-                                  ProfileFormUpdated(email: value),
-                                );
-                              },
-                            ),
-                            SizedBox(height: 8),
-                            CustomTextField(
-                              controller: _addressController,
-                              onChanged: (value) {
-                                context.read<ProfileBloc>().add(
-                                  ProfileFormUpdated(address: value),
-                                );
-                              },
-                            ),
-                          ],
-                        ),
+
+                case AppStatus.failure:
+                  Navigator.pop(context);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      backgroundColor: Colors.red,
+                      content: Text(
+                        state.failure?.message ?? 'Failed to complete the job',
                       ),
                     ),
-                  ],
-                );
-              },
-            ),
+                  );
+                case AppStatus.successful:
+                  Navigator.pop(context);
+                  Navigator.pop(context);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      backgroundColor: Colors.green,
+                      content: Text('Successful'),
+                    ),
+                  );
+                default:
+              }
+            },
+
+            buildWhen: (previous, current) => previous.status != current.status,
+            builder: (context, state) {
+              return Column(
+                children: [
+                  Form(
+                    key: _formKey,
+                    child: Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+
+                        children: [
+                          Text('Name'),
+                          CustomTextField(
+                            controller: _nameController,
+                            onChanged: (value) {
+                              context.read<ProfileBloc>().add(
+                                ProfileFormUpdated(name: value),
+                              );
+                            },
+                          ),
+                          SizedBox(height: 8),
+                          Text('Email'),
+
+                          CustomTextField(
+                            controller: _emailController,
+                            onChanged: (value) {
+                              context.read<ProfileBloc>().add(
+                                ProfileFormUpdated(email: value),
+                              );
+                            },
+                          ),
+                          SizedBox(height: 8),
+                          Text('Address'),
+                          CustomTextField(
+                            controller: _addressController,
+                            onChanged: (value) {
+                              context.read<ProfileBloc>().add(
+                                ProfileFormUpdated(address: value),
+                              );
+                            },
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              );
+            },
           ),
           bottomNavigationBar: BlocBuilder<ProfileBloc, ProfileState>(
             buildWhen: (previous, current) =>
@@ -163,34 +162,32 @@ class _ProfileScreenState extends State<ProfileScreen> {
             builder: (context, state) {
               final isDirty = state.isDirty;
 
-              return CustomBottomNavigationBar(
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    ElevatedButton(
-                      onPressed: isDirty
-                          ? () {
-                              context.read<ProfileBloc>().add(
-                                ProfileFormResetted(),
-                              );
-                              _setup(state);
-                            }
-                          : null,
-                      child: Text('Reset'),
-                    ),
-                    ElevatedButton(
-                      onPressed: isDirty
-                          ? () {
-                              if (_formKey.currentState!.validate()) {
-                                context.read<ProfileBloc>().add(
-                                  ProfileSubmitted(),
-                                );
-                              }
-                            }
-                          : null,
-                      child: Text('Save'),
-                    ),
-                  ],
+              return Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: CustomBottomNavigationBar(
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      CustomBotton(
+                        text: 'Reset',
+                        isEnabled: isDirty,
+                        onPressed: () {
+                          context.read<ProfileBloc>().add(
+                            ProfileFormResetted(),
+                          );
+                        },
+                      ),
+                      CustomBotton(
+                        text: 'Save',
+                        isEnabled: isDirty,
+                        onPressed: () {
+                          if (_formKey.currentState!.validate()) {
+                            context.read<ProfileBloc>().add(ProfileSubmitted());
+                          }
+                        },
+                      ),
+                    ],
+                  ),
                 ),
               );
             },

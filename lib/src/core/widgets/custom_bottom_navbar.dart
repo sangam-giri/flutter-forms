@@ -10,9 +10,7 @@ class CustomBottomNavigationBar extends StatelessWidget {
     return AnimatedPadding(
       duration: const Duration(milliseconds: 200),
       padding: EdgeInsets.only(
-        bottom: MediaQuery.of(context).viewInsets.bottom + 8,
-        left: 8,
-        right: 8,
+        bottom: MediaQuery.of(context).viewInsets.bottom,
       ),
       child: child,
     );

@@ -18,10 +18,4 @@ class ProfileFormUpdated extends ProfileEvent {
 
 class ProfileFormResetted extends ProfileEvent {}
 
-class ProfileSateUpdated extends ProfileEvent {
-  final AppStatus status;
-
-  ProfileSateUpdated({required this.status});
-}
-
 class ProfileSubmitted extends ProfileEvent {}
