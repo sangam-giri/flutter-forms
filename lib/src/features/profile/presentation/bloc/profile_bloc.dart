@@ -1,6 +1,6 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:forms_example/src/core/enums/app_status.dart';
+import 'package:forms_example/src/core/enums/enums.dart';
 import 'package:forms_example/src/core/failure/failure.dart';
 import 'package:forms_example/src/features/profile/domain/entity/profile.dart';
 part 'profile_event.dart';
@@ -53,9 +53,9 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
     ProfileSubmitted event,
     Emitter<ProfileState> emit,
   ) async {
-    emit(state.copyWith(status: AppStatus.loading));
+    emit(state.copyWith(submitStatus: SubmitStatus.submitting));
 
     await Future.delayed(Duration(seconds: 3));
-    emit(state.copyWith(status: AppStatus.successful));
+    emit(state.copyWith(submitStatus: SubmitStatus.success));
   }
 }

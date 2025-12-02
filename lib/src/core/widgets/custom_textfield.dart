@@ -14,11 +14,7 @@ class CustomTextField extends StatelessWidget {
   Widget build(BuildContext context) {
     return TextFormField(
       controller: controller,
-      decoration: InputDecoration(
-        border: OutlineInputBorder(),
-
-        errorStyle: TextStyle(color: Colors.transparent, height: 0),
-      ),
+      decoration: InputDecoration(border: OutlineInputBorder()),
       autovalidateMode: AutovalidateMode.onUserInteraction,
       validator: (value) {
         if (controller.text.isEmpty) {

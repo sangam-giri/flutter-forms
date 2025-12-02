@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:forms_example/src/core/enums/app_status.dart';
+import 'package:forms_example/src/core/enums/enums.dart';
 import 'package:forms_example/src/core/widgets/custom_bottom_navbar.dart';
 import 'package:forms_example/src/core/widgets/custom_botton.dart';
 import 'package:forms_example/src/core/widgets/custom_textfield.dart';
@@ -36,14 +36,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
         _nameController.text = initial.name ?? '';
         _emailController.text = initial.email ?? '';
         _addressController.text = initial.address ?? '';
+      } else {
+        _nameController.clear();
+        _emailController.clear();
+        _addressController.clear();
       }
     });
-  }
-
-  void _clearFields() {
-    _nameController.clear();
-    _emailController.clear();
-    _addressController.clear();
   }
 
   @override
@@ -65,96 +63,125 @@ class _ProfileScreenState extends State<ProfileScreen> {
         child: Scaffold(
           resizeToAvoidBottomInset: true,
           appBar: AppBar(),
-          body: BlocConsumer<ProfileBloc, ProfileState>(
-            listenWhen: (previous, current) =>
-                previous.status != current.status,
-            listener: (context, state) {
-              switch (state.status) {
-                case AppStatus.initial:
-                  _clearFields();
+          body: MultiBlocListener(
+            listeners: [
+              BlocListener<ProfileBloc, ProfileState>(
+                listenWhen: (previous, current) =>
+                    previous.status != current.status,
+                listener: (context, state) {
+                  switch (state.status) {
+                    case AppStatus.loaded:
+                      _setup(state);
 
-                case AppStatus.loaded:
-                  Navigator.pop(context);
-                  _setup(state);
+                    default:
+                  }
+                },
+              ),
+              BlocListener<ProfileBloc, ProfileState>(
+                listenWhen: (previous, current) =>
+                    previous.submitStatus != current.submitStatus,
+                listener: (context, state) {
+                  switch (state.submitStatus) {
+                    case SubmitStatus.submitting:
+                      showDialog(
+                        context: context,
+                        builder: (context) => Center(
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              CircularProgressIndicator(color: Colors.white),
+                              SizedBox(height: 40),
+                              Text(
+                                'Loading',
+                                style: TextStyle(color: Colors.white),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
 
-                case AppStatus.loading:
-                  showDialog(
-                    context: context,
-                    builder: (context) => Center(child: Text('Loading')),
-                  );
+                    case SubmitStatus.failure:
+                      Navigator.pop(context);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          backgroundColor: Colors.red,
+                          content: Text(
+                            state.failure?.message ??
+                                'Failed to complete the job',
+                          ),
+                        ),
+                      );
+                    case SubmitStatus.success:
+                      Navigator.pop(context);
 
-                case AppStatus.failure:
-                  Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      backgroundColor: Colors.red,
-                      content: Text(
-                        state.failure?.message ?? 'Failed to complete the job',
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          backgroundColor: Colors.green,
+                          content: Text('Successful'),
+                        ),
+                      );
+                      Navigator.pop(context);
+
+                    default:
+                  }
+                },
+              ),
+            ],
+            child: BlocBuilder<ProfileBloc, ProfileState>(
+              buildWhen: (previous, current) =>
+                  previous.status != current.status,
+              builder: (context, state) {
+                if (state.status == AppStatus.loading) {
+                  return Center(child: CircularProgressIndicator());
+                }
+                return Column(
+                  children: [
+                    Form(
+                      key: _formKey,
+                      child: Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+
+                          children: [
+                            Text('Name'),
+                            CustomTextField(
+                              controller: _nameController,
+                              onChanged: (value) {
+                                context.read<ProfileBloc>().add(
+                                  ProfileFormUpdated(name: value),
+                                );
+                              },
+                            ),
+                            SizedBox(height: 8),
+                            Text('Email'),
+
+                            CustomTextField(
+                              controller: _emailController,
+                              onChanged: (value) {
+                                context.read<ProfileBloc>().add(
+                                  ProfileFormUpdated(email: value),
+                                );
+                              },
+                            ),
+                            SizedBox(height: 8),
+                            Text('Address'),
+                            CustomTextField(
+                              controller: _addressController,
+                              onChanged: (value) {
+                                context.read<ProfileBloc>().add(
+                                  ProfileFormUpdated(address: value),
+                                );
+                              },
+                            ),
+                          ],
+                        ),
                       ),
                     ),
-                  );
-                case AppStatus.successful:
-                  Navigator.pop(context);
-                  Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      backgroundColor: Colors.green,
-                      content: Text('Successful'),
-                    ),
-                  );
-                default:
-              }
-            },
-
-            buildWhen: (previous, current) => previous.status != current.status,
-            builder: (context, state) {
-              return Column(
-                children: [
-                  Form(
-                    key: _formKey,
-                    child: Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-
-                        children: [
-                          Text('Name'),
-                          CustomTextField(
-                            controller: _nameController,
-                            onChanged: (value) {
-                              context.read<ProfileBloc>().add(
-                                ProfileFormUpdated(name: value),
-                              );
-                            },
-                          ),
-                          SizedBox(height: 8),
-                          Text('Email'),
-
-                          CustomTextField(
-                            controller: _emailController,
-                            onChanged: (value) {
-                              context.read<ProfileBloc>().add(
-                                ProfileFormUpdated(email: value),
-                              );
-                            },
-                          ),
-                          SizedBox(height: 8),
-                          Text('Address'),
-                          CustomTextField(
-                            controller: _addressController,
-                            onChanged: (value) {
-                              context.read<ProfileBloc>().add(
-                                ProfileFormUpdated(address: value),
-                              );
-                            },
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
-              );
-            },
+                  ],
+                );
+              },
+            ),
           ),
           bottomNavigationBar: BlocBuilder<ProfileBloc, ProfileState>(
             buildWhen: (previous, current) =>
@@ -175,6 +202,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           context.read<ProfileBloc>().add(
                             ProfileFormResetted(),
                           );
+                          _setup(state);
                         },
                       ),
                       CustomBotton(
